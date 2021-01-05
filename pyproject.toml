@@ -1,0 +1,23 @@
+[tool.poetry]
+name = "jax_audio"
+version = "0.1.0"
+description = "small audio utils for faster data processing"
+authors = ["machineko"]
+
+[tool.poetry.dependencies]
+python = "^3.6"
+librosa = "^0.8.0"
+numpy = "^1.19.4"
+jax = "^0.2.7"
+
+[tool.poetry.dev-dependencies]
+pytest = "^5.2"
+pytest-benchmark = "^3.2"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.black]
+line-length = 90
+target-version = ['py38']
