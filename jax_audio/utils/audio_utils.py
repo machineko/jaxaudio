@@ -6,7 +6,6 @@ import wave
 from jax import lax
 from jax_audio.utils.audio_exception import ParameterError
 from functools import partial
-import jax
 
 
 def get_window(win_name: str, win_length: int, **kwargs) -> jnp.ndarray:
@@ -23,7 +22,7 @@ def get_window(win_name: str, win_length: int, **kwargs) -> jnp.ndarray:
     if win_func:
         return win_func(win_length, **kwargs)
     else:
-        raise NotImplemented(f"{win_name} isn't yet implemented in jax")
+        raise NotImplementedError(f"{win_name} isn't yet implemented in jax")
 
 
 def pad_center(data: jnp.ndarray, size: int, axis=-1, **kwargs) -> jnp.ndarray:
@@ -108,7 +107,7 @@ def read_wav(
     wav_file = wave.open(f_name)
 
     if wav_file.getnchannels() != 1:
-        raise NotImplemented("Reading not mono file isn't implemented yet")
+        raise NotImplementedError("Reading not mono file isn't implemented yet")
 
     samples = wav_file.getnframes()
     audio = wav_file.readframes(samples)
