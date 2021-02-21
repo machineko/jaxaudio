@@ -1,14 +1,19 @@
-from abc import ABC, abstractmethod
+from abc import ABC
+from abc import abstractmethod
 from dataclasses import dataclass
 from functools import partial
-from typing import List, Tuple, Union
+from typing import List
+from typing import Tuple
+from typing import Union
 
 import jax.numpy as jnp
 import numpy as np
-from jax import jit, vmap
+from jax import jit
+from jax import vmap
 from librosa.filters import mel as librosa_mel_fn
 
-from jax_audio.utils.audio_utils import read_wav, stft
+from jax_audio.utils.audio_utils import read_wav
+from jax_audio.utils.audio_utils import stft
 
 
 @dataclass
