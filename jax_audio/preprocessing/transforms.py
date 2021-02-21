@@ -39,8 +39,7 @@ class MelGenBasic(ABC):
         # run dataset preprocessing before to create bucket of similar len or compilation times destroy you :D!
         if self.use_vmap:
             self.stft_parser = partial(
-                jit(vmap(stft, in_axes=(0, None, None, None)),
-                    static_argnums=(1, 2, 3))
+                jit(vmap(stft, in_axes=(0, None, None, None)), static_argnums=(1, 2, 3))
             )
         else:
             self.stft_parser = partial(jit(stft, static_argnums=(1, 2, 3)))
@@ -89,8 +88,7 @@ class MelGeneratorNV(MelGenBasic):  # Mimic nvidia mel generator for waveglow
     ):
         audio_list = []
         for f_name in f_names:
-            audio, sampling_rate = read_wav(
-                f_name, normalize=False, return_jax=False)
+            audio, sampling_rate = read_wav(f_name, normalize=False, return_jax=False)
             audio_norm = audio / self.max_wav_value
             audio_list.append(audio_norm)
         return self.mel_gen(self.pad_generator(audio_list, max_len)[0])
@@ -110,8 +108,7 @@ class MelGeneratorNV(MelGenBasic):  # Mimic nvidia mel generator for waveglow
             assert jnp.max(y) <= 1
 
         magnitudes = jnp.abs(
-            self.stft_parser(y, self.filter_length,
-                             self.hop_length, self.win_length)
+            self.stft_parser(y, self.filter_length, self.hop_length, self.win_length)
         )
 
         energy = None
@@ -146,8 +143,7 @@ class MelGeneratorTF(MelGenBasic):  # Mimic TensorflowTTS version :P
     ):
         audio_list = []
         for f_name in f_names:
-            audio, sampling_rate = read_wav(
-                f_name, normalize=False, return_jax=False)
+            audio, sampling_rate = read_wav(f_name, normalize=False, return_jax=False)
             audio_norm = audio / self.max_wav_value
             audio_list.append(audio_norm)
         return self.mel_gen(self.pad_generator(audio_list, max_len)[0])
@@ -164,8 +160,7 @@ class MelGeneratorTF(MelGenBasic):  # Mimic TensorflowTTS version :P
         assert jnp.max(y) <= 1
 
         magnitudes = jnp.abs(
-            self.stft_parser(y, self.filter_length,
-                             self.hop_length, self.win_length)
+            self.stft_parser(y, self.filter_length, self.hop_length, self.win_length)
         )
 
         energy = None
@@ -173,7 +168,6 @@ class MelGeneratorTF(MelGenBasic):  # Mimic TensorflowTTS version :P
             energy = self.calc_energy(magnitudes ** 1)
 
         return (
-            jnp.log10(jnp.maximum(jnp.matmul(
-                self.mel_basis, magnitudes), 1e-10)),
+            jnp.log10(jnp.maximum(jnp.matmul(self.mel_basis, magnitudes), 1e-10)),
             energy,
         )
