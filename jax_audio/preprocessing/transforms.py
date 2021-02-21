@@ -39,14 +39,13 @@ class MelGenBasic(ABC):
                 self.n_mel_channels,
                 self.mel_f_min,
                 self.mel_f_max,
-            )
-        )
+            ))
         # JIT Will compile versions for every diff sized arrays
         # run dataset preprocessing before to create bucket of similar len or compilation times destroy you :D!
         if self.use_vmap:
             self.stft_parser = partial(
-                jit(vmap(stft, in_axes=(0, None, None, None)), static_argnums=(1, 2, 3))
-            )
+                jit(vmap(stft, in_axes=(0, None, None, None)),
+                    static_argnums=(1, 2, 3)))
         else:
             self.stft_parser = partial(jit(stft, static_argnums=(1, 2, 3)))
 
@@ -69,11 +68,11 @@ class MelGenBasic(ABC):
             max_shape = max_len
         new_array = np.zeros((len(x), max_shape))
         for i in range(len(x)):
-            new_array[i, : shapes[i]] = x[i]
+            new_array[i, :shapes[i]] = x[i]
         return jnp.asarray(new_array), shapes
 
     def calc_energy(self, magnitudes: jnp.ndarray):
-        return jnp.sqrt(jnp.sum(magnitudes ** 2, axis=1 if self.use_vmap else 0))
+        return jnp.sqrt(jnp.sum(magnitudes**2, axis=1 if self.use_vmap else 0))
 
     @abstractmethod
     def mel_gen(self, audio: jnp.ndarray):
@@ -89,18 +88,22 @@ class MelGeneratorNV(MelGenBasic):  # Mimic nvidia mel generator for waveglow
             audio_norm = audio_norm.reshape(1, -1)
         return self.mel_gen(audio_norm)
 
-    def audio_file_to_mel_batch(
-        self, f_names: List[str], max_len: Union[int, None] = None
-    ):
+    def audio_file_to_mel_batch(self,
+                                f_names: List[str],
+                                max_len: Union[int, None] = None):
         audio_list = []
         for f_name in f_names:
-            audio, sampling_rate = read_wav(f_name, normalize=False, return_jax=False)
+            audio, sampling_rate = read_wav(f_name,
+                                            normalize=False,
+                                            return_jax=False)
             audio_norm = audio / self.max_wav_value
             audio_list.append(audio_norm)
         return self.mel_gen(self.pad_generator(audio_list, max_len)[0])
 
     def mel_gen(
-        self, y: jnp.ndarray, safe_check: bool = True
+        self,
+        y: jnp.ndarray,
+        safe_check: bool = True
     ) -> Tuple[jnp.ndarray, Union[jnp.ndarray, None]]:
         """
         Args:
@@ -114,21 +117,20 @@ class MelGeneratorNV(MelGenBasic):  # Mimic nvidia mel generator for waveglow
             assert jnp.max(y) <= 1
 
         magnitudes = jnp.abs(
-            self.stft_parser(y, self.filter_length, self.hop_length, self.win_length)
-        )
+            self.stft_parser(y, self.filter_length, self.hop_length,
+                             self.win_length))
 
         energy = None
         if self.use_energy:
-            energy = self.calc_energy(magnitudes ** 1)
+            energy = self.calc_energy(magnitudes**1)
 
         mel_output = jnp.matmul(self.mel_basis, magnitudes)
         return self.spectral_normalization(mel_output), energy
 
     @staticmethod
     def spectral_normalization(magnitudes: jnp.ndarray):
-        return jnp.log(
-            jnp.clip(magnitudes, a_min=1e-5, a_max=None) * 1.0
-        )  # mimic nvidia version
+        return jnp.log(jnp.clip(magnitudes, a_min=1e-5, a_max=None) *
+                       1.0)  # mimic nvidia version
 
     @staticmethod
     def spectral_de_normalization(magnitudes: jnp.ndarray):
@@ -144,17 +146,21 @@ class MelGeneratorTF(MelGenBasic):  # Mimic TensorflowTTS version :P
             audio_norm = audio_norm.reshape(1, -1)
         return self.mel_gen(audio_norm)
 
-    def audio_file_to_mel_batch(
-        self, f_names: List[str], max_len: Union[int, None] = None
-    ):
+    def audio_file_to_mel_batch(self,
+                                f_names: List[str],
+                                max_len: Union[int, None] = None):
         audio_list = []
         for f_name in f_names:
-            audio, sampling_rate = read_wav(f_name, normalize=False, return_jax=False)
+            audio, sampling_rate = read_wav(f_name,
+                                            normalize=False,
+                                            return_jax=False)
             audio_norm = audio / self.max_wav_value
             audio_list.append(audio_norm)
         return self.mel_gen(self.pad_generator(audio_list, max_len)[0])
 
-    def mel_gen(self, y: jnp.ndarray) -> Tuple[jnp.ndarray, Union[jnp.ndarray, None]]:
+    def mel_gen(
+            self,
+            y: jnp.ndarray) -> Tuple[jnp.ndarray, Union[jnp.ndarray, None]]:
         """
         Args:
             y: jax numpy ndarray with shape (Batch, T) normalized into [-1, 1] range
@@ -166,14 +172,15 @@ class MelGeneratorTF(MelGenBasic):  # Mimic TensorflowTTS version :P
         assert jnp.max(y) <= 1
 
         magnitudes = jnp.abs(
-            self.stft_parser(y, self.filter_length, self.hop_length, self.win_length)
-        )
+            self.stft_parser(y, self.filter_length, self.hop_length,
+                             self.win_length))
 
         energy = None
         if self.use_energy:
-            energy = self.calc_energy(magnitudes ** 1)
+            energy = self.calc_energy(magnitudes**1)
 
         return (
-            jnp.log10(jnp.maximum(jnp.matmul(self.mel_basis, magnitudes), 1e-10)),
+            jnp.log10(
+                jnp.maximum(jnp.matmul(self.mel_basis, magnitudes), 1e-10)),
             energy,
         )
