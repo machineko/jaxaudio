@@ -71,7 +71,7 @@ class MelGenBasic(ABC):
 
     @abstractmethod
     def mel_gen(self, audio: jnp.ndarray):
-        raise NotImplemented
+        raise NotImplementedError
 
 
 @dataclass
